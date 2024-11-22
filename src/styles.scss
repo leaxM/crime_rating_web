@@ -1,1 +1,104 @@
 /* You can add global styles to this file, and also import other style files */
+html,
+body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  font-family: 'rawline', Rawline, serif;
+}
+
+@font-face {
+  font-family: 'Rawline';
+  src: url('assets/fonts/Rawline/rawline-100.ttf') format('truetype');
+  font-weight: 100;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Rawline';
+  src: url('assets/fonts/Rawline/rawline-200.ttf') format('truetype');
+  font-weight: 200;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Rawline';
+  src: url('assets/fonts/Rawline/rawline-300.ttf') format('truetype');
+  font-weight: 300;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Rawline';
+  src: url('assets/fonts/Rawline/rawline-400.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Rawline';
+  src: url('assets/fonts/Rawline/rawline-500.ttf') format('truetype');
+  font-weight: 500;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Rawline';
+  src: url('assets/fonts/Rawline/rawline-600.ttf') format('truetype');
+  font-weight: 600;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Rawline';
+  src: url('assets/fonts/Rawline/rawline-700.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Rawline';
+  src: url('assets/fonts/Rawline/rawline-800.ttf') format('truetype');
+  font-weight: 800;
+  font-style: normal;
+}
+
+
+input {
+  width: -webkit-fill-available;
+  height: 40px;
+  padding: 0 20px 0 20px;
+  background: #FFFFFF 0 0 no-repeat padding-box;
+  border: 1px solid #888888;
+  border-radius: 4px;
+  font-size: 1em;
+}
+
+input::placeholder {
+  font-style: italic;
+}
+
+label {
+  font-size: 1em;
+  font-weight: 600;
+}
+
+.input {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  width: 100%;
+}
+
+button.submit {
+  border: none;
+  box-shadow: 0 2px 3px #00000029;
+  border-radius: 24px;
+  font-size: 1em;
+  font-weight: bold;
+  color: #FFFFFF;
+  cursor: pointer;
+  background: #1351B4 0 0 no-repeat padding-box;
+  width: 145px;
+  height: 40px;
+}

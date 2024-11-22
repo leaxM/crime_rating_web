@@ -1,0 +1,20 @@
+  <div class="content">
+    <div class="login">
+      <div class="logo">
+        <img class="logo-gov" src="https://sso.acesso.gov.br/assets/govbr/img/govbr.png" alt="Logomarca GovBR">
+      </div>
+      <h3>Identifique-se com:</h3>
+      <a>
+        <img src="https://sso.acesso.gov.br/assets/govbr/img/icons/id-card-solid.png">
+        Número do CPF
+      </a>
+      <p>Digite seu CPF para <strong>acessar</strong> sua conta gov.br</p>
+      <div class="input">
+        <label for="cpf">CPF</label>
+        <input type="text" placeholder="Digite seu CPF" [(ngModel)]="cpf" mask="000.000.000-00">
+      </div>
+      <div class="button-panel">
+        <button class="submit" (click)="login()">Continuar</button>
+      </div>
+    </div>
+  </div>
