@@ -22,8 +22,8 @@ export class MapaComponent implements OnInit, OnDestroy {
           this.map?.setView([userLat, userLng], 15);
 
           this.userMarker = L.marker([userLat, userLng]).addTo(this.map!)
-          .bindPopup('Você está aqui!')
-          .openPopup();
+            .bindPopup('Você está aqui!')
+            .openPopup();
         },
         () => {
           alert('Não foi possível obter a sua localização.');
@@ -38,9 +38,6 @@ export class MapaComponent implements OnInit, OnDestroy {
       alert('Geolocalização não é suportada pelo seu navegador.');
     }
     this.initMap();
-    this.locationInterval = setInterval(() => {
-      this.updateUserLocation();
-    }, 10000);
   }
 
   ngOnDestroy(): void {
@@ -82,20 +79,29 @@ export class MapaComponent implements OnInit, OnDestroy {
   }
 
   private initMap(): void {
-    this.map = L.map('map', {preferCanvas: true}).setView([51.505, -0.09], 13, );
+    this.map = L.map('map', { preferCanvas: true }).setView([51.505, -0.09], 13,);
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; OpenStreetMap contributors'
     }).addTo(this.map);
   }
 
-  pesquisarDestino(): void {
+  public pesquisarDestino(): void {
+    this.map?.eachLayer((layer) => {
+      if (layer instanceof L.Polyline || layer instanceof L.Marker) {
+        this.map?.removeLayer(layer);
+      }
+    });
+
+    const altElements = document.querySelectorAll('.leaflet-routing-container');
+    altElements.forEach((element: Element) => {
+      element.innerHTML = '';
+    });
+
     if (this.destino.trim() === '') {
       alert('Por favor, digite um destino válido.');
       return;
     }
-
-    // Use a API de geocodificação para buscar as coordenadas
     fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(this.destino)}`)
       .then(response => response.json())
       .then(data => {
@@ -104,45 +110,82 @@ export class MapaComponent implements OnInit, OnDestroy {
           const destLon = parseFloat(data[0].lon);
           this.map?.setView([destLat, destLon], 15);
 
-          // Adiciona um marcador para o destino
           L.marker([destLat, destLon]).addTo(this.map!)
             .bindPopup(`Destino: ${this.destino}`)
             .openPopup();
 
-          // Desenha a rota e captura as ruas intermediárias
           if (this.userMarker) {
             const userLatLng = this.userMarker.getLatLng();
+
             const routingControl = L.Routing.control({
               waypoints: [
                 L.latLng(userLatLng.lat, userLatLng.lng),
                 L.latLng(destLat, destLon)
               ],
+              router: L.Routing.osrmv1({
+                serviceUrl: 'https://router.project-osrm.org/route/v1',
+                language: 'pt-BR',
+              }),
               routeWhileDragging: true,
+              timeTemplate: 'Tempo estimado: {time}',
+              show: true,
               showAlternatives: true,
-              createMarker: () => null // Evita criar os marcadores padrões
-            } as any).addTo(this.map!);
+              addWaypoints: false,
+
+            }).addTo(this.map!);
 
             routingControl.on('routesfound', (e) => {
-              const route = e.routes[0]; // Seleciona a primeira rota encontrada
-              const streetNames: string[] = [];
-              console.log('Rota:', route);
-              // Extrai os nomes das ruas intermediárias
-              const ruasString = route.name
-              const ruasArray = ruasString.split(',').map((rua: string) => rua.trim());
-              // Envia os nomes das ruas para o backend
-              console.log(JSON.stringify({ Rua: ruasArray }))
-              fetch('http://127.0.0.1:8000/buscar_enderecos/', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ Rua: ruasArray })
-              })
+              const ocorrencias: number[] = [];
+              const polylines: L.Polyline[] = [];
+
+              e.routes.forEach((route: any, index: number) => {
+                // Cria a polyline para a rota
+                const polyline = L.polyline(route.coordinates, {
+                  weight: 10, // Largura da linha
+                  opacity: 1, // Exibe todas as rotas inicialmente
+                  dashArray: undefined, // Remove qualquer estilo de linha pontilhada
+                  lineJoin: 'round'
+                }).addTo(this.map!);
+                polylines.push(polyline);
+
+                const ruasArray = route.instructions.map((instruction: any) => instruction.road);
+                fetch('http://127.0.0.1:8000/buscar_enderecos/', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ Rua: ruasArray })
+                })
                 .then(response => response.json())
                 .then(data => {
-                  console.log('Resposta do servidor:', data);
-                })
-                .catch(error => {
-                  console.error('Erro ao enviar os nomes das ruas:', error);
+                  const totalOcorrencias = data.reduce((sum: number, item: any) => sum + item.QTD, 0);
+                  ocorrencias[index] = totalOcorrencias;
+
+                  const altElements = document.querySelectorAll('.leaflet-routing-alt');
+                  if (altElements[index]) {
+                    const tagDiv = document.createElement('div');
+                    tagDiv.className = 'tag-ocorrencias';
+                    tagDiv.textContent = `Ocorrências: ${totalOcorrencias}`;
+                    altElements[index].appendChild(tagDiv);
+
+                    (tagDiv as HTMLElement).style.padding = '3px';
+                    (tagDiv as HTMLElement).style.width = 'fit-content';
+                    (tagDiv as HTMLElement).style.color = 'white';
+                    (tagDiv as HTMLElement).style.borderRadius = '15px';
+
+                    // Define a cor de fundo com base no número de ocorrências
+                    if (ocorrencias.length === e.routes.length) {
+                      const minOcorrencias = Math.min(...ocorrencias);
+                      const maxOcorrencias = Math.max(...ocorrencias);
+                      ocorrencias.forEach((ocorrencia, i) => {
+                        const bgColor = ocorrencia === minOcorrencias ? 'green' : 'red';
+                        const lineColor = ocorrencia === minOcorrencias ? 'blue' : 'red';
+                        (altElements[i].querySelector('.tag-ocorrencias') as HTMLElement).style.backgroundColor = bgColor;
+                        polylines[i].setStyle({ color: lineColor });
+                        (altElements[i] as HTMLElement).style.border = `2px solid ${lineColor}`;
+                      });
+                    }
+                  }
                 });
+              });
             });
           }
         } else {
